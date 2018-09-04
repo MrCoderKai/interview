@@ -33,6 +33,14 @@
 
 在实例化`m_instance`变量时，直接调用类的构造函数。也就是说，在还未使用变量的时候，就已经对`m_instance`进行赋值，就像很饥饿一样。这种模式，在多线程环境下肯定是安全的。因为无法调用构造函数，即不能通过代码创建singleton的实例，只能使用类变量`m_instance`，无论在哪个线程中，通过`singleton.GetInstance()`获取到的都是同一个实例，因此不可能存在多线程实例化的问题。
 
+饿汉模式需要注意的点：
+
+1. 构造函数定义成`protected`或`private`，保证无法通过构造函数创建`singleton`的实例。
+2. 只允许一个实例的类定义成`singleton`类的`private static`指针。
+3. `m_instance`定义成`auto_ptr`以避免内存泄漏。
+4. 提供`public`方法供外界获取`m_instance`。
+5. 由于`m_instance`是静态成员变量，因此必须在类外（**在.cpp文件中**）初始化。
+
 提示：
 
 1. 类T可以有多个实例，这里的单例指的是通过类`singleton`获取到的实例只可能有一个。
