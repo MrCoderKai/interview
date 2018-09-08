@@ -59,6 +59,7 @@
 			singleton& operator=(const singleton&); // 禁止赋值
 			// 使用auto_ptr能够避免内存泄漏问题
 			static auto_ptr<T> m_instance;
+			static pthread_mutex_t mutex;
 		public:
 			// GetInstance声明成static的原因有两点
 			// 1. 通过类名就能访问，因为构造函数为privated，无法通过创建实例，也就无法通过实例调用
@@ -70,11 +71,16 @@
 	T* singleton<T>::GetInstance(){
 		if(m_instance == nullptr)
 		{
-			// 注意，此处不能写成auto_ptr<T> m_instance(new T)
-			// 因为有可能在实例没有创建完时，m_instance就不为nullptr了，这时另外一个线程在使用m_instance时会产生无法预料的行为。
-			// 所以此处使用了中间变量，保证了线程安全。另外赋值操作是原子性的，因此使用中间变量之后，线程安全。
-			auto_ptr<T> temp(new T);
-			m_instance = temp;
+			pthread_mutex_lock(&mutex);
+			if(m_instance == nullptr)
+			{
+				// 注意，此处不能写成auto_ptr<T> m_instance(new T)
+				// 因为有可能在实例没有创建完时，m_instance就不为nullptr了，这时另外一个线程在使用m_instance时会产生无法预料的行为。
+				// 所以此处使用了中间变量，保证了线程安全。另外赋值操作是原子性的，因此使用中间变量之后，线程安全。
+				auto_ptr<T> temp(new T);
+				m_instance = temp;
+			}
+			pthread_mutex_unlock(&mutex);
 		}
 		return m_instance;
 	}
